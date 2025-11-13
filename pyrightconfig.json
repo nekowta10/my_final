@@ -1,0 +1,7 @@
+{
+    "include": ["our_project"],
+    "venvPath": ".",
+    "venv": "my_final",
+    "typeCheckingMode": "basic"
+}
+

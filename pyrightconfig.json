@@ -1,7 +1,34 @@
 {
-    "include": ["our_project"],
-    "venvPath": ".",
+    "include": [
+        "my_final/my_final/my_final/our_project"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        "**/.*",
+        "**/Lib/**",
+        "**/Scripts/**"
+    ],
+    "venvPath": "my_final/my_final",
     "venv": "my_final",
-    "typeCheckingMode": "basic"
+    "pythonVersion": "3.14",
+    "typeCheckingMode": "off",
+    "reportMissingImports": "none",
+    "reportMissingTypeStubs": "none",
+    "reportUnusedImport": "none",
+    "reportUnusedClass": "none",
+    "reportUnusedFunction": "none",
+    "reportUnusedVariable": "none",
+    "pythonPlatform": "Windows",
+    "executionEnvironments": [
+        {
+            "root": "my_final/my_final/my_final/our_project",
+            "pythonVersion": "3.14",
+            "pythonPlatform": "Windows",
+            "extraPaths": [
+                "my_final/my_final/my_final/Lib/site-packages"
+            ]
+        }
+    ]
 }
 

@@ -1,0 +1,106 @@
+{% extends 'my_app/base_dashboard.html' %}
+
+{% block title %}Teacher Dashboard · Survey Hub{% endblock %}
+
+{% block sidebar_nav %}
+    <a class="sidebar-link active" href="{% url 'teacher_dashboard' %}">Overview</a>
+    <a class="sidebar-link" href="{% url 'create_survey_form' %}">Create Survey</a>
+    <a class="sidebar-link" href="#surveys">Manage Surveys</a>
+{% endblock %}
+
+{% block page_title %}
+    Teacher Workspace
+    <small>Design, assign, and analyse your surveys.</small>
+{% endblock %}
+
+{% block topbar_actions %}
+    <span class="badge">
+        {{ user.get_full_name|default:user.username }}
+    </span>
+    <a href="{% url 'create_survey_form' %}" class="btn-primary">＋ Create Survey</a>
+{% endblock %}
+
+{% block content %}
+    <div class="grid grid-cols-3">
+        <div class="card">
+            <div class="card-header">
+                Total Surveys
+            </div>
+            <div class="value-highlight">{{ total_surveys }}</div>
+            <div class="muted">Surveys created by you.</div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                Total Responses
+            </div>
+            <div class="value-highlight">{{ total_responses }}</div>
+            <div class="muted">Collected across all surveys.</div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                Latest Activity
+            </div>
+            {% with latest=surveys|first %}
+                {% if latest %}
+                    <div class="muted">
+                        Last created: {{ latest.created_at|date:"M d, Y" }}
+                    </div>
+                {% else %}
+                    <div class="muted">No activity yet.</div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <div class="card" id="surveys">
+        <div class="card-header">
+            Your Surveys
+            <span class="badge">{{ surveys|length }} active</span>
+        </div>
+
+        {% if surveys %}
+            <div class="list">
+                {% for survey in surveys %}
+                    <div class="list-item">
+                        <div>
+                            <h4>{{ survey.title }}</h4>
+                            <p>
+                                Sections:
+                                {% if survey.assigned_sections.all %}
+                                    {% for section in survey.assigned_sections.all %}
+                                        {{ section.name }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    All sections
+                                {% endif %}
+                                · Due: {{ survey.due_date|date:"M d, Y"|default:"No deadline" }}
+                            </p>
+                            <p class="muted">
+                                Type:
+                                {% if survey.survey_type %}
+                                    {{ survey.get_survey_type_display }}
+                                {% else %}
+                                    Not set
+                                {% endif %}
+                            </p>
+                            <p class="muted">
+                                Responses: {{ survey.responses.count }}
+                            </p>
+                        </div>
+                        <div class="topbar-actions">
+                            <a href="{% url 'edit_survey' survey.id %}" class="btn-primary" style="padding: 10px 14px;">Edit</a>
+                            <a href="{% url 'survey_responses' survey.id %}" class="btn-primary" style="padding: 10px 14px; background: #7c3aed;">View</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                You haven't created any surveys yet.
+                <div style="margin-top: 16px;">
+                    <a href="{% url 'create_survey_form' %}" class="btn-primary">Plan your first survey</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

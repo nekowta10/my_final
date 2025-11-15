@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Survey System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .register-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+        }
+        .register-container h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: white;
+            color: #1f2937;
+            transition: all 0.2s ease;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+        }
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234f46e5' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+        button {
+            width: auto;
+            min-width: fit-content;
+            padding: 12px 18px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 12px 25px rgba(79, 70, 229, 0.18);
+            transition: all 0.25s ease;
+        }
+        button:hover {
+            background: #4338ca;
+            box-shadow: 0 12px 30px rgba(79, 70, 229, 0.22);
+            transform: translateY(-1px);
+        }
+        .error {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        .role-info {
+            font-size: 12px;
+            color: #999;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <h1>Register</h1>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="password_confirm">Confirm Password</label>
+                <input type="password" id="password_confirm" name="password_confirm" required>
+            </div>
+            <div class="form-group">
+                <label for="role">I am a:</label>
+                <select id="role" name="role" required onchange="toggleSectionField()">
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                </select>
+                <div class="role-info">Select your role in the survey system</div>
+            </div>
+            <div class="form-group" id="section-group">
+                <label for="section">Section/Class</label>
+                <select id="section" name="section">
+                    <option value="">Select a section</option>
+                    {% for section_option in sections %}
+                        <option value="{{ section_option.id }}">{{ section_option.name }}</option>
+                    {% endfor %}
+                </select>
+                <div class="role-info">
+                    {% if sections %}
+                        Your class or section (students only)
+                    {% else %}
+                        No sections available yet. Ask an administrator to add one in Django admin.
+                    {% endif %}
+                </div>
+            </div>
+            <button type="submit">Register</button>
+        </form>
+        <div class="login-link">
+            Already have an account? <a href="{% url 'login' %}">Login here</a>
+        </div>
+    </div>
+
+    <script>
+        function toggleSectionField() {
+            const role = document.getElementById('role').value;
+            const sectionGroup = document.getElementById('section-group');
+            const sectionSelect = document.getElementById('section');
+            if (role === 'student') {
+                sectionGroup.style.display = 'block';
+            } else {
+                sectionGroup.style.display = 'none';
+                if (sectionSelect) {
+                    sectionSelect.value = '';
+                }
+            }
+        }
+        // Initialize on page load
+        toggleSectionField();
+    </script>
+</body>
+</html>

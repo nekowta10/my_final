@@ -1,0 +1,447 @@
+{% extends 'my_app/base_dashboard.html' %}
+
+{% block title %}Edit Survey · Survey Hub{% endblock %}
+
+{% block sidebar_nav %}
+    <a class="sidebar-link" href="{% url 'teacher_dashboard' %}">Overview</a>
+    <a class="sidebar-link active" href="{% url 'edit_survey' survey.id %}">Edit Survey</a>
+    <a class="sidebar-link" href="#surveys">Manage Surveys</a>
+{% endblock %}
+
+{% block topbar_actions %}
+    <span class="badge">
+        {{ user.get_full_name|default:user.username }}
+    </span>
+    <a href="{% url 'teacher_dashboard' %}" class="btn-secondary">Back to Dashboard</a>
+{% endblock %}
+
+{% block page_title %}{{ survey.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .survey-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .info-item {
+        background: rgba(79, 70, 229, 0.05);
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+    .info-item strong {
+        color: var(--text-dark);
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+    .question-item {
+        background: rgba(79, 70, 229, 0.05);
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        border-left: 4px solid var(--primary-color);
+    }
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 10px;
+        gap: 12px;
+    }
+    .question-text {
+        font-weight: 600;
+        color: var(--text-dark);
+        flex: 1;
+    }
+    .question-type {
+        background: var(--primary-color);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .choices-container {
+        background: rgba(79, 70, 229, 0.03);
+        padding: 16px;
+        border-radius: 12px;
+        margin-top: 12px;
+        margin-bottom: 12px;
+    }
+    .choice-input {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .choice-input input {
+        flex: 1;
+    }
+    .checkbox {
+        width: auto;
+        margin-right: 8px;
+        accent-color: var(--primary-color);
+    }
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 16px;
+    }
+    .custom-dropdown {
+        position: relative;
+        width: 100%;
+    }
+    .dropdown-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: white;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: border 0.2s ease, box-shadow 0.2s ease;
+        min-height: 48px;
+    }
+    .dropdown-toggle:hover {
+        border-color: var(--primary-color);
+    }
+    .dropdown-toggle.active {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+    }
+    .dropdown-text {
+        flex: 1;
+        color: var(--text-dark);
+        font-size: 0.95rem;
+    }
+    .dropdown-text.placeholder {
+        color: var(--text-muted);
+    }
+    .dropdown-arrow {
+        color: var(--primary-color);
+        font-size: 0.75rem;
+        transition: transform 0.2s ease;
+        margin-left: 12px;
+    }
+    .dropdown-toggle.active .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        border-radius: 12px;
+        margin-top: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+        z-index: 1000;
+    }
+    .dropdown-menu.show {
+        display: block;
+    }
+    .dropdown-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    .dropdown-option:last-child {
+        border-bottom: none;
+    }
+    .dropdown-option:hover {
+        background: rgba(79, 70, 229, 0.05);
+    }
+    .dropdown-option input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--primary-color);
+    }
+    .dropdown-option span {
+        flex: 1;
+        color: var(--text-dark);
+        font-size: 0.95rem;
+    }
+</style>
+<script>
+    function toggleSectionDropdown() {
+        const menu = document.getElementById('section-dropdown-menu');
+        const toggle = document.querySelector('#section-dropdown .dropdown-toggle');
+        menu.classList.toggle('show');
+        toggle.classList.toggle('active');
+    }
+    
+    function updateSectionDropdownText() {
+        const checkboxes = document.querySelectorAll('#section-dropdown-menu input[type="checkbox"]:checked');
+        const textElement = document.getElementById('section-dropdown-text');
+        
+        if (checkboxes.length === 0) {
+            textElement.textContent = 'Select sections (leave empty for all)';
+            textElement.classList.add('placeholder');
+        } else if (checkboxes.length === 1) {
+            textElement.textContent = checkboxes[0].nextElementSibling.textContent;
+            textElement.classList.remove('placeholder');
+        } else {
+            textElement.textContent = `${checkboxes.length} sections selected`;
+            textElement.classList.remove('placeholder');
+        }
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('section-dropdown');
+        if (dropdown && !dropdown.contains(event.target)) {
+            const menu = document.getElementById('section-dropdown-menu');
+            const toggle = document.querySelector('#section-dropdown .dropdown-toggle');
+            menu.classList.remove('show');
+            toggle.classList.remove('active');
+        }
+    });
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSectionDropdownText();
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+    <!-- Survey Details Card -->
+    <div class="card">
+        <div class="card-header">Survey Information</div>
+        {% if survey.description %}
+            <p class="muted">{{ survey.description }}</p>
+        {% endif %}
+        <div class="survey-info">
+            <div class="info-item">
+                <strong>Sections:</strong>
+                {% if survey.assigned_sections.all %}
+                    {% for section in survey.assigned_sections.all %}
+                        {{ section.name }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                {% else %}
+                    All sections
+                {% endif %}
+            </div>
+            <div class="info-item">
+                <strong>Survey Type:</strong>
+                {% if survey.survey_type %}
+                    {{ survey.get_survey_type_display }}
+                {% else %}
+                    Not set
+                {% endif %}
+            </div>
+            <div class="info-item">
+                <strong>Due Date:</strong>
+                {{ survey.due_date|date:"M d, Y"|default:"No deadline" }}
+            </div>
+            <div class="info-item">
+                <strong>Status:</strong>
+                {% if survey.is_active %}
+                    <span style="color: #16a34a;">Active</span>
+                {% else %}
+                    <span style="color: #dc2626;">Inactive</span>
+                {% endif %}
+            </div>
+            <div class="info-item">
+                <strong>Questions:</strong>
+                {{ questions.count }}
+            </div>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;">
+            <a href="{% url 'survey_responses' survey.id %}" class="btn-success">View Responses</a>
+            <form method="POST" action="{% url 'delete_survey' survey.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger" onclick="return confirm('Are you sure you want to delete this survey?')">Delete Survey</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Update Survey Details -->
+    <div class="card">
+        <div class="card-header">Update Survey Details</div>
+        <form method="POST" action="{% url 'edit_survey' survey.id %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="title">Survey Title *</label>
+                <input type="text" id="title" name="title" value="{{ survey.title }}" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" placeholder="Brief description...">{{ survey.description }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="survey_type">Survey Type</label>
+                <select id="survey_type" name="survey_type">
+                    <option value="">Select a survey type</option>
+                    {% for survey_type_value, survey_type_label in survey_types %}
+                        <option value="{{ survey_type_value }}" {% if survey.survey_type == survey_type_value %}selected{% endif %}>
+                            {{ survey_type_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="section-dropdown">Assigned Sections</label>
+                <div class="custom-dropdown" id="section-dropdown">
+                    <div class="dropdown-toggle" onclick="toggleSectionDropdown()">
+                        <span class="dropdown-text" id="section-dropdown-text">Select sections (leave empty for all)</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="dropdown-menu" id="section-dropdown-menu">
+                        {% for section in sections %}
+                            <label class="dropdown-option">
+                                <input type="checkbox" name="assigned_sections" value="{{ section.id }}" 
+                                    {% if section in survey.assigned_sections.all %}checked{% endif %}
+                                    onchange="updateSectionDropdownText()">
+                                <span>{{ section.name }}</span>
+                            </label>
+                        {% endfor %}
+                        {% if not sections %}
+                            <div style="padding: 12px; color: #dc2626; font-size: 0.85rem;">
+                                No sections available. Add sections in Django admin.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">
+                    Select one or more sections. Leave empty to assign to all sections.
+                </p>
+            </div>
+            <div class="form-group">
+                <label for="due_date">Due Date</label>
+                <input type="date" id="due_date" name="due_date" value="{{ survey.due_date|date:'Y-m-d' }}">
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" name="is_active" class="checkbox" {% if survey.is_active %}checked{% endif %}>
+                    <span>Survey is active</span>
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Questions List -->
+    <div class="card">
+        <div class="section-title">Questions ({{ questions.count }})</div>
+        {% if questions %}
+            <div class="list">
+                {% for question in questions %}
+                    <div class="question-item">
+                        <div class="question-header">
+                            <div class="question-text">
+                                {{ question.text }}
+                                {% if question.required %}
+                                    <span style="color: #dc2626;">*</span>
+                                {% endif %}
+                            </div>
+                            <span class="question-type">{{ question.get_question_type_display }}</span>
+                        </div>
+                        {% if question.choices.all %}
+                            <div style="margin: 10px 0; color: var(--text-muted); font-size: 0.85rem;">
+                                <strong>Options:</strong>
+                                {% for choice in question.choices.all %}
+                                    {{ choice.text }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div style="display: flex; gap: 8px; margin-top: 12px;">
+                            <form method="POST" action="{% url 'delete_question' survey.id question.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-danger" style="padding: 8px 16px; font-size: 0.85rem;" onclick="return confirm('Delete this question?')">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>No questions added yet. Add your first question below.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Add Question Form -->
+    <div class="card">
+        <div class="card-header">Add New Question</div>
+        <form method="POST" action="{% url 'add_question' survey.id %}">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="question_text">Question Text *</label>
+                <input type="text" id="question_text" name="question_text" required placeholder="Enter your question...">
+            </div>
+
+            <div class="form-group">
+                <label for="question_type">Question Type *</label>
+                <select id="question_type" name="question_type" onchange="toggleChoicesInput()">
+                    <option value="text">Short Answer</option>
+                    <option value="mcq">Multiple Choice (MCQ)</option>
+                    <option value="likert">Likert Scale</option>
+                </select>
+            </div>
+
+            <div id="choices-section" style="display: none;">
+                <div class="form-group">
+                    <label>Answer Options</label>
+                    <div class="choices-container" id="choices-container">
+                        <div class="choice-input">
+                            <input type="text" name="choices" placeholder="Option 1">
+                        </div>
+                        <div class="choice-input">
+                            <input type="text" name="choices" placeholder="Option 2">
+                        </div>
+                    </div>
+                    <button type="button" class="btn-secondary" onclick="addChoiceInput()" style="margin-top: 8px;">+ Add Option</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" name="required" class="checkbox">
+                    <span>Make this question required</span>
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Add Question</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function toggleChoicesInput() {
+            const type = document.getElementById('question_type').value;
+            const choicesSection = document.getElementById('choices-section');
+            choicesSection.style.display = (type === 'text') ? 'none' : 'block';
+        }
+
+        function addChoiceInput() {
+            const container = document.getElementById('choices-container');
+            const input = document.createElement('div');
+            input.className = 'choice-input';
+            input.innerHTML = '<input type="text" name="choices" placeholder="Option ' + (container.children.length + 1) + '">';
+            container.appendChild(input);
+        }
+
+        // Initialize on page load
+        toggleChoicesInput();
+    </script>
+{% endblock %}

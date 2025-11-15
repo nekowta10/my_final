@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey System - Home</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .home-container {
+            background: white;
+            padding: 50px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 36px;
+        }
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        a {
+            padding: 12px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+        .btn-login {
+            background: #667eea;
+            color: white;
+        }
+        .btn-login:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        .btn-register {
+            background: #764ba2;
+            color: white;
+        }
+        .btn-register:hover {
+            background: #673a8f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.3);
+        }
+        .features {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+            text-align: left;
+        }
+        .features h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .features ul {
+            list-style: none;
+            color: #666;
+        }
+        .features li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+        .features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="home-container">
+        <h1>📊 Survey System</h1>
+        <p>A comprehensive platform for teachers to create surveys and students to respond to them with ease and efficiency.</p>
+        
+        <div class="button-group">
+            <a href="{% url 'login' %}" class="btn-login">Login</a>
+            <a href="{% url 'register' %}" class="btn-register">Register</a>
+        </div>
+
+        <div class="features">
+            <h3>Features</h3>
+            <ul>
+                <li><strong>For Teachers:</strong> Create and manage surveys, view student responses, track completion</li>
+                <li><strong>For Students:</strong> Respond to assigned surveys, view submission history, track progress</li>
+                <li><strong>Secure:</strong> Role-based access control and authentication</li>
+                <li><strong>Easy to Use:</strong> Intuitive interface for all user types</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,201 @@
+{% extends 'my_app/base_dashboard.html' %}
+
+{% block title %}My Responses · Survey Hub{% endblock %}
+
+{% block extra_head %}
+<style>
+    .history-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+    .history-summary .card {
+        flex: 1;
+        min-width: 220px;
+    }
+    .history-item {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: rgba(79, 70, 229, 0.05);
+        border-radius: 12px;
+        padding: 18px;
+    }
+    .history-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+    }
+    .history-item h4 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+    .history-date {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    .answer-list {
+        display: grid;
+        gap: 12px;
+        background: white;
+        border-radius: 10px;
+        padding: 16px;
+        box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.05);
+    }
+    .answer-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    .answer-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    .answer-item strong {
+        font-size: 0.9rem;
+        color: var(--text-dark);
+    }
+    .answer-item span {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+    .answer-correct {
+        background: rgba(34, 197, 94, 0.1);
+        border-left: 3px solid #22c55e;
+    }
+    .answer-incorrect {
+        background: rgba(239, 68, 68, 0.1);
+        border-left: 3px solid #ef4444;
+    }
+    .answer-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .answer-badge.correct {
+        background: #22c55e;
+        color: white;
+    }
+    .answer-badge.incorrect {
+        background: #ef4444;
+        color: white;
+    }
+    .correct-answer-hint {
+        font-size: 0.85rem;
+        color: #059669;
+        font-weight: 500;
+        font-style: italic;
+    }
+    .empty-history {
+        background: rgba(79, 70, 229, 0.08);
+        border-radius: var(--border-radius);
+        padding: 36px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block sidebar_nav %}
+    <a class="sidebar-link" href="{{ dashboard_url }}?tab=overview">Overview</a>
+    <a class="sidebar-link" href="{{ dashboard_url }}?tab=pending">Pending Surveys</a>
+    <a class="sidebar-link" href="{{ dashboard_url }}?tab=completed">Completed Surveys</a>
+    <a class="sidebar-link active" href="{% url 'student_history' %}">My Responses</a>
+{% endblock %}
+
+{% block page_title %}
+    Submission History
+    <small>Review every survey you've completed.</small>
+{% endblock %}
+
+{% block topbar_actions %}
+    <span class="badge">
+        {{ user.get_full_name|default:user.username }} · Section {{ section|default:"—" }}
+    </span>
+{% endblock %}
+
+{% block content %}
+    <div class="history-summary">
+        <div class="card">
+            <div class="card-header">Total Submissions</div>
+            <div class="value-highlight">{{ response_count }}</div>
+            <div class="muted">Surveys completed to date.</div>
+        </div>
+        <div class="card">
+            <div class="card-header">Latest Survey</div>
+            {% if history %}
+                {% with latest=history|first %}
+                    <div style="font-weight: 600; color: var(--text-dark);">
+                        {{ latest.survey.title }}
+                    </div>
+                    <div class="muted">Submitted {{ latest.submitted_at|date:"M d, Y H:i" }}</div>
+                {% endwith %}
+            {% else %}
+                <div class="muted">No submissions yet.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if history %}
+        <div class="card" style="gap: 18px;">
+            <div class="card-header">Response Timeline</div>
+            <div class="list" style="gap: 16px;">
+                {% for entry in history %}
+                    <div class="history-item">
+                        <div class="history-item-header">
+                            <h4>{{ entry.survey.title }}</h4>
+                            <span class="history-date">
+                                Submitted {{ entry.submitted_at|date:"M d, Y H:i" }}
+                            </span>
+                        </div>
+                        <div class="muted">
+                            {{ entry.survey.description|default:"No description provided." }}
+                        </div>
+                        <div class="muted" style="font-size: 0.85rem;">
+                            Type:
+                            {% if entry.survey.survey_type %}
+                                {{ entry.survey.survey_type.name }}
+                            {% else %}
+                                Not set
+                            {% endif %}
+                            · Sections:
+                            {% if entry.survey.assigned_sections.all %}
+                                {% for section in entry.survey.assigned_sections.all %}
+                                    {{ section.name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                All sections
+                            {% endif %}
+                        </div>
+                        <div class="answer-list">
+                            {% for answer in entry.answers %}
+                                <div class="answer-item {% if answer.is_correct == True %}answer-correct{% elif answer.is_correct == False %}answer-incorrect{% endif %}">
+                                    <strong>{{ answer.question }}</strong>
+                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                        <span>{{ answer.answer }}</span>
+                                        {% if answer.question_type == 'mcq' %}
+                                            {% if answer.is_correct == True %}
+                                                <span class="answer-badge correct">✓ Correct</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-history">
+            You haven't submitted any surveys yet. Once you do, your responses will appear here for easy review.
+        </div>
+    {% endif %}
+{% endblock %}
+

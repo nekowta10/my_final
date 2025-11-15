@@ -1,0 +1,14 @@
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/my_final/my_final/my_final/Scripts/python.exe",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/my_final/my_final/my_final/Lib/site-packages"
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "none",
+        "reportMissingTypeStubs": "none"
+    },
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.useLibraryCodeForTypes": true
+}
+

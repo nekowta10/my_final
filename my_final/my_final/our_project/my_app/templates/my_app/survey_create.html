@@ -1,0 +1,218 @@
+{% extends 'my_app/base_dashboard.html' %}
+
+{% block title %}Create Survey · Survey Hub{% endblock %}
+
+{% block extra_head %}
+<style>
+    .custom-dropdown {
+        position: relative;
+        width: 100%;
+    }
+    .dropdown-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: white;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: border 0.2s ease, box-shadow 0.2s ease;
+        min-height: 48px;
+    }
+    .dropdown-toggle:hover {
+        border-color: var(--primary-color);
+    }
+    .dropdown-toggle.active {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+    }
+    .dropdown-text {
+        flex: 1;
+        color: var(--text-dark);
+        font-size: 0.95rem;
+    }
+    .dropdown-text.placeholder {
+        color: var(--text-muted);
+    }
+    .dropdown-arrow {
+        color: var(--primary-color);
+        font-size: 0.75rem;
+        transition: transform 0.2s ease;
+        margin-left: 12px;
+    }
+    .dropdown-toggle.active .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        border-radius: 12px;
+        margin-top: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+        z-index: 1000;
+    }
+    .dropdown-menu.show {
+        display: block;
+    }
+    .dropdown-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    .dropdown-option:last-child {
+        border-bottom: none;
+    }
+    .dropdown-option:hover {
+        background: rgba(79, 70, 229, 0.05);
+    }
+    .dropdown-option input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--primary-color);
+    }
+    .dropdown-option span {
+        flex: 1;
+        color: var(--text-dark);
+        font-size: 0.95rem;
+    }
+</style>
+<script>
+    function toggleSectionDropdown() {
+        const menu = document.getElementById('section-dropdown-menu');
+        const toggle = document.querySelector('#section-dropdown .dropdown-toggle');
+        menu.classList.toggle('show');
+        toggle.classList.toggle('active');
+    }
+    
+    function updateSectionDropdownText() {
+        const checkboxes = document.querySelectorAll('#section-dropdown-menu input[type="checkbox"]:checked');
+        const textElement = document.getElementById('section-dropdown-text');
+        
+        if (checkboxes.length === 0) {
+            textElement.textContent = 'Select sections (leave empty for all)';
+            textElement.classList.add('placeholder');
+        } else if (checkboxes.length === 1) {
+            textElement.textContent = checkboxes[0].nextElementSibling.textContent;
+            textElement.classList.remove('placeholder');
+        } else {
+            textElement.textContent = `${checkboxes.length} sections selected`;
+            textElement.classList.remove('placeholder');
+        }
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('section-dropdown');
+        if (dropdown && !dropdown.contains(event.target)) {
+            const menu = document.getElementById('section-dropdown-menu');
+            const toggle = document.querySelector('#section-dropdown .dropdown-toggle');
+            menu.classList.remove('show');
+            toggle.classList.remove('active');
+        }
+    });
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSectionDropdownText();
+    });
+</script>
+{% endblock %}
+
+{% block sidebar_nav %}
+    <a class="sidebar-link" href="{% url 'teacher_dashboard' %}">Overview</a>
+    <a class="sidebar-link active" href="{% url 'create_survey_form' %}">Create Survey</a>
+    <a class="sidebar-link" href="#surveys">Manage Surveys</a>
+{% endblock %}
+
+{% block topbar_actions %}
+    <span class="badge">
+        {{ user.get_full_name|default:user.username }}
+    </span>
+{% endblock %}
+
+{% block page_title %}Create New Survey{% endblock %}
+
+{% block content %}
+    <div class="card">
+        {% if error %}
+            <div class="error" style="background: #fee2e2; color: #991b1b; padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #fecaca;">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="title">Survey Title *</label>
+                <input type="text" id="title" name="title" required placeholder="e.g., Customer Feedback" value="{{ form_data.title|default:'' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" placeholder="Brief description of the survey...">{{ form_data.description|default:'' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="survey_type">Survey Type *</label>
+                <select id="survey_type" name="survey_type" required>
+                    <option value="">Select a survey type</option>
+                    {% for survey_type_value, survey_type_label in survey_types %}
+                        <option value="{{ survey_type_value }}" {% if form_data.survey_type|default:'' == survey_type_value %}selected{% endif %}>{{ survey_type_label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="section-dropdown">Sections/Classes to Assign</label>
+                <div class="custom-dropdown" id="section-dropdown">
+                    <div class="dropdown-toggle" onclick="toggleSectionDropdown()">
+                        <span class="dropdown-text" id="section-dropdown-text">Select sections (leave empty for all)</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="dropdown-menu" id="section-dropdown-menu">
+                        {% for section in sections %}
+                            <label class="dropdown-option">
+                                <input type="checkbox" name="assigned_sections" value="{{ section.id }}" 
+                                    {% if form_data.assigned_sections and section.id|stringformat:"s" in form_data.assigned_sections %}checked{% endif %}
+                                    onchange="updateSectionDropdownText()">
+                                <span>{{ section.name }}</span>
+                            </label>
+                        {% endfor %}
+                        {% if not sections %}
+                            <div style="padding: 12px; color: #dc2626; font-size: 0.85rem;">
+                                No sections available. Add sections in Django admin before creating surveys.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">
+                    Select one or more sections. Leave empty to assign to all sections.
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label for="due_date">Due Date</label>
+                <input type="date" id="due_date" name="due_date" value="{{ form_data.due_date|default:'' }}">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Create Survey</button>
+                <a href="{% url 'teacher_dashboard' %}" class="btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

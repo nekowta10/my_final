@@ -1,0 +1,118 @@
+{% extends 'my_app/base_dashboard.html' %}
+
+{% block title %}Student Dashboard · Survey Hub{% endblock %}
+
+{% block sidebar_nav %}
+    <a class="sidebar-link{% if active_tab == 'overview' %} active{% endif %}" href="{% url 'student_dashboard' %}?tab=overview">Overview</a>
+    <a class="sidebar-link{% if active_tab == 'pending' %} active{% endif %}" href="{% url 'student_dashboard' %}?tab=pending">Pending Surveys</a>
+    <a class="sidebar-link{% if active_tab == 'completed' %} active{% endif %}" href="{% url 'student_dashboard' %}?tab=completed">Completed Surveys</a>
+    <a class="sidebar-link" href="{% url 'student_history' %}">Submission History</a>
+{% endblock %}
+
+{% block page_title %}
+    Student Hub
+    <small>Track your assignments and stay on top of deadlines.</small>
+{% endblock %}
+
+{% block topbar_actions %}
+    <span class="badge">
+        {{ user.get_full_name|default:user.username }} · Section {% if section %}{{ section.name }}{% else %}—{% endif %}
+    </span>
+{% endblock %}
+
+{% block content %}
+    {% if not section %}
+        <div class="card">
+            <div class="muted">
+                You're not assigned to a section yet. Ask your teacher to update your section from the admin panel.
+            </div>
+        </div>
+    {% endif %}
+
+    {% if active_tab == 'overview' %}
+        <div class="grid grid-cols-3">
+            <div class="card">
+                <div class="card-header">Total Assigned</div>
+                <div class="value-highlight">{{ total_assigned }}</div>
+                <div class="muted">Surveys available to you.</div>
+            </div>
+            <div class="card">
+                <div class="card-header">Completed</div>
+                <div class="value-highlight">{{ total_completed }}</div>
+                <div class="muted">Surveys you've already submitted.</div>
+            </div>
+            <div class="card">
+                <div class="card-header">Pending</div>
+                <div class="value-highlight">{{ pending_surveys|length }}</div>
+                <div class="muted">Waiting for your response.</div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if show_pending %}
+        <div class="card" id="pending">
+            <div class="card-header">
+                Pending Surveys
+                <span class="badge warning">{{ pending_surveys|length }}</span>
+        </div>
+
+        {% if pending_surveys %}
+                <div class="list">
+                {% for survey in pending_surveys %}
+                        <div class="list-item">
+                            <div>
+                            <h4>{{ survey.title }}</h4>
+                                <p>
+                                    {{ survey.description|default:"No description provided." }}
+                                </p>
+                                <p class="muted">
+                                    {{ survey.questions.count }} questions · Due {{ survey.due_date|date:"M d, Y"|default:"No deadline" }}
+                                {% if survey.survey_type %}
+                                    · Type: {{ survey.get_survey_type_display }}
+                                {% endif %}
+                                </p>
+                            </div>
+                            <a href="{% url 'survey_detail' survey.id %}" class="btn-primary" style="padding: 10px 16px;">Start</a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+                <div class="empty-state">
+                    No pending surveys right now — check back soon!
+                </div>
+            {% endif %}
+            </div>
+        {% endif %}
+
+    {% if show_completed %}
+        <div class="card" id="completed">
+            <div class="card-header">
+                Completed Surveys
+                <span class="badge success">{{ completed_surveys|length }}</span>
+            </div>
+
+        {% if completed_surveys %}
+                <div class="list">
+                {% for survey in completed_surveys %}
+                        <div class="list-item">
+                            <div>
+                            <h4>{{ survey.title }}</h4>
+                                <p class="muted">
+                                    Submitted ✓ · {{ survey.questions.count }} questions
+                                {% if survey.survey_type %}
+                                    · {{ survey.get_survey_type_display }}
+                                {% endif %}
+                                </p>
+                            </div>
+                            <a href="{% url 'survey_detail' survey.id %}" class="btn-primary" style="padding: 10px 16px; background: #16a34a;">Review</a>
+                    </div>
+                {% endfor %}
+            </div>
+            {% else %}
+                <div class="empty-state">
+                    You haven't completed any surveys yet — once you do, they'll appear here.
+                </div>
+        {% endif %}
+    </div>
+    {% endif %}
+{% endblock %}
